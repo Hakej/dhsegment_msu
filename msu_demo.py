@@ -15,7 +15,6 @@ from dh_segment.post_processing import binarization
 
 project_dir = 'msu_demo'
 
-
 def page_make_binary_mask(probs: np.ndarray, threshold: float=-1) -> np.ndarray:
     """
     Computes the binary mask of the detected Page from the probabilities outputed by network
@@ -62,7 +61,10 @@ if __name__ == '__main__':
             prediction_outputs = m.predict(filename)
             probs = prediction_outputs['probs'][0]
             original_shape = prediction_outputs['original_shape']
-            classes = get_classes()
+            classes = get_classes()[1:]
+
+            img = Image.open(filename, 'r')
+            pixels = img.load()
 
             # Iterate over all classes
             for p, cl in enumerate(classes):
@@ -77,8 +79,6 @@ if __name__ == '__main__':
                                           tuple(original_shape[::-1]), interpolation=cv2.INTER_NEAREST)
 
                 # Load image
-                img = Image.open(filename, 'r')
-                pixels = img.load()
 
                 # Get class colors
                 cr, cg, cb = cl[0:3]
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                             ng = int((cg + g) / 2)
                             nb = int((cb + b) / 2)
                             pixels[j, i] = (nr, ng, nb)
-
+               
             # Save output
             basename = os.path.basename(filename).split('.')[0]
             imsave(os.path.join(output_dir, '{}_marked.jpg'.format(basename)), img)

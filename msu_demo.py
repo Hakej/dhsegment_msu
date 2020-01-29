@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 from glob import glob
 
 import cv2
@@ -66,11 +67,16 @@ if __name__ == '__main__':
             img = Image.open(filename, 'r')
             pixels = img.load()
 
+            if(len(sys.argv)>1 and sys.argv[1]=="-m"):
+                    for i in range(original_shape[::-1][1]):
+                        for j in range(original_shape[::-1][0]):
+                            pixels[j,i]=(255,255,255)
+
             # Iterate over all classes
             for p, cl in enumerate(classes):
                 if (p==0):
                     continue
-                prob = probs[:, :, p]  # Take only class '1' (class 0 is the background, class 1 is the page)
+                prob = probs[:, :, p]  # Take only class 'p' (class 0 is the background, class 1 is the page)
                 prob = prob / np.max(prob)  # Normalize to be in [0, 1]
 
                 # Binarize the predictions
@@ -86,18 +92,32 @@ if __name__ == '__main__':
                 cr, cg, cb = cl[0:3]
                 print("Color: ({0}, {1}, {2})".format(cr, cg, cb))
 
-                # Mark each masked pixel with a transparent color
-                for i, row in enumerate(bin_upscaled):
-                    for j, col in enumerate(row):
-                        # If pixel belongs to a class
-                        if col == 1:
-                            r, g, b = img.getpixel((j, i))
-                            # Make class colors transparent
-                            nr = int((cr + r) / 2)
-                            ng = int((cg + g) / 2)
-                            nb = int((cb + b) / 2)
-                            pixels[j, i] = (nr, ng, nb)
+                if(len(sys.argv)>1 and sys.argv[1]=="-m"):
+                    for i, row in enumerate(bin_upscaled):
+                        for j, col in enumerate(row):
+                            # If pixel belongs to a class
+                            if col == 1:
+                                # Make class colors transparent
+                                nr = cr
+                                ng = cg
+                                nb = cb
+                                pixels[j, i] = (nr, ng, nb)
+                else:
+                    # Mark each masked pixel with a transparent color
+                    for i, row in enumerate(bin_upscaled):
+                        for j, col in enumerate(row):
+                            # If pixel belongs to a class
+                            if col == 1:
+                                r, g, b = img.getpixel((j, i))
+                                # Make class colors transparent
+                                nr = int((cr + r) / 2)
+                                ng = int((cg + g) / 2)
+                                nb = int((cb + b) / 2)
+                                pixels[j, i] = (nr, ng, nb)
                
             # Save output
             basename = os.path.basename(filename).split('.')[0]
-            imsave(os.path.join(output_dir, '{}_marked.jpg'.format(basename)), img)
+            if(len(sys.argv)>1 and sys.argv[1]=="-m"):
+                imsave(os.path.join(output_dir, 'mask_{}.jpg'.format(basename)), img)
+            else:
+                imsave(os.path.join(output_dir, '{}.jpg'.format(basename)), img)

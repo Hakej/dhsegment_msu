@@ -61,13 +61,15 @@ if __name__ == '__main__':
             prediction_outputs = m.predict(filename)
             probs = prediction_outputs['probs'][0]
             original_shape = prediction_outputs['original_shape']
-            classes = get_classes()[1:]
+            classes = get_classes()
 
             img = Image.open(filename, 'r')
             pixels = img.load()
 
             # Iterate over all classes
             for p, cl in enumerate(classes):
+                if (p==0):
+                    continue
                 prob = probs[:, :, p]  # Take only class '1' (class 0 is the background, class 1 is the page)
                 prob = prob / np.max(prob)  # Normalize to be in [0, 1]
 
